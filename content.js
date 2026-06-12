@@ -200,7 +200,7 @@
         } else if (b) b.style.display = 'none';
     }
 
-    // ---------- display + trade-up links (unchanged) ----------
+    // ---------- adjusted-float display + trade-up links ----------
     function decorateCards() {
         // Only the <item-card> element — each one contains a nested .item-card, so
         // selecting both tag AND class matched every card twice and inserted the

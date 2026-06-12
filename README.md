@@ -3,8 +3,9 @@
 A Chrome extension that adds trade-up convenience features to csfloat.com.
 
 ## Features
-1. **Search pages** — under each listing's float value, shows the
-   trade-up *adjusted float* (`TU: 0.xxxx`), computed as
+1. **Search pages** — under each tradeup-eligible listing's float value
+   (Consumer through Classified grades), shows the trade-up
+   *adjusted float* (`TU: 0.xxxx`), computed as
    `(actual_float − low_cap) / (high_cap − low_cap)`. Works for all
    search queries and keeps working as you scroll (paging) or hit
    "reload listings".
@@ -21,7 +22,7 @@ A Chrome extension that adds trade-up convenience features to csfloat.com.
    conversion needs that skin's float caps.
    <img width="357" height="214" alt="image" src="https://github.com/user-attachments/assets/23157db1-3545-4e8f-8282-201a19906c40" />
 
-4. **Trade-up calculator** — once you add a skin and set its float, the
+3. **Trade-up calculator** — once you add a skin and set its float, the
    item's title becomes a clickable link to a prefilled CSFloat search
    (`sort_by=lowest_price`, `type=buy_now`, `max_float=<your float>`,
    plus the correct `def_index` / `paint_index`).
@@ -29,10 +30,11 @@ A Chrome extension that adds trade-up convenience features to csfloat.com.
 
 
 ## Data source
-Float caps and def/paint indices come from CSFloat's own
-`/api/v1/schema` endpoint, trimmed to a compact `name → [def, paint,
-min, max]` map (~83 KB) and cached in localStorage for 24h. No bundled
-database — it self-updates when new skins release.
+Float caps, def/paint indices and tradeup eligibility come from CSFloat's
+own `/api/v1/schema` endpoint, trimmed to a compact
+`name → [def, paint, min, max, eligible]` map (~87 KB) and cached in
+localStorage for 24h. No bundled database — it self-updates when new
+skins release.
 
 ## Install (unpacked)
 1. Save `manifest.json`, `content.js`, `styles.css` in one folder.
