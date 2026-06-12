@@ -19,7 +19,9 @@ A Chrome extension that adds trade-up convenience features to csfloat.com.
    overlays them in place. The checkbox is greyed out (with a hover hint)
    unless the search is filtered to one specific skin, since the
    conversion needs that skin's float caps.
-3. **Trade-up calculator** — once you add a skin and set its float, the
+   <img width="357" height="214" alt="image" src="https://github.com/user-attachments/assets/23157db1-3545-4e8f-8282-201a19906c40" />
+
+4. **Trade-up calculator** — once you add a skin and set its float, the
    item's title becomes a clickable link to a prefilled CSFloat search
    (`sort_by=lowest_price`, `type=buy_now`, `max_float=<your float>`,
    plus the correct `def_index` / `paint_index`).
