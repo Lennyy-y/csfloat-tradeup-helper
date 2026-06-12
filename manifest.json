@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "CSFloat Trade-Up Helper",
+  "version": "0.1.0",
+  "description": "Shows trade-up adjusted float on listings and links trade-up items to prefilled searches.",
+  "permissions": ["storage"],
+  "host_permissions": ["https://csfloat.com/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://csfloat.com/*"],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}
