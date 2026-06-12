@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "CSFloat Tradeup Filler Helper",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Adds tradeup-adjusted float display, clickable trade-up titles, and an adjusted-float filter to CSFloat.",
   "permissions": ["storage"],
   "host_permissions": ["https://csfloat.com/*"],

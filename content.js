@@ -1,6 +1,6 @@
 (() => {
     'use strict';
-    const SCHEMA_KEY = 'cftuh_schema_v3';
+    const SCHEMA_KEY = 'cftuh_schema_v4';
     const SCHEMA_TTL = 24 * 60 * 60 * 1000;
 
     let NAME_MAP = null, CAP_INDEX = null;
@@ -14,15 +14,31 @@
         } catch (_) {}
         if (!NAME_MAP) {
             const s = await (await fetch('/api/v1/schema')).json();
+            // Knives/gloves are never trade-up inputs and carry off-ladder rarities, so
+            // they're excluded both as candidates and from the per-collection grade ladder.
+            const isKG = name => /knife|bayonet|karambit|daggers|glove|wraps/i.test(name);
+            // pass 1: the set of weapon grades (rarities) present in each collection
+            const colRarities = Object.create(null);
+            for (const def in s.weapons) {
+                const w = s.weapons[def]; if (!w.paints || isKG(w.name)) continue;
+                for (const p in w.paints)
+                    for (const c of (w.paints[p].collections || []))
+                        (colRarities[c] || (colRarities[c] = new Set())).add(w.paints[p].rarity);
+            }
+            // CSFloat's schema has no "eligible" flag. A skin is a valid trade-up input only
+            // if its collection holds the next grade up (the contract output) — so it's not
+            // just Covert/Contraband that are excluded, but any top-of-collection skin
+            // (e.g. a Classified/Restricted that's the highest grade in its set).
+            const tradeable = (rarity, collections) =>
+                rarity >= 1 && rarity <= 5 &&
+                (collections || []).some(c => colRarities[c] && colRarities[c].has(rarity + 1));
+            // pass 2: name -> [def, paint, min, max, eligible]
             NAME_MAP = {};
             for (const def in s.weapons) {
                 const w = s.weapons[def]; if (!w.paints) continue;
                 for (const p in w.paints) {
                     const pp = w.paints[p];
-                    // CSFloat's schema has no "eligible" flag — tradeup eligibility is by
-                    // grade: rarity 1..5 (Consumer→Classified) can be tradeup inputs; 6
-                    // (Covert) and 7 (Contraband) cannot be traded up further.
-                    const elig = pp.rarity >= 1 && pp.rarity <= 5 ? 1 : 0;
+                    const elig = !isKG(w.name) && tradeable(pp.rarity, pp.collections) ? 1 : 0;
                     NAME_MAP[`${w.name} | ${pp.name}`] = [+def, +p, pp.min, pp.max, elig];
                 }
             }

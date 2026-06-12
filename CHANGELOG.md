@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.2.1 — 2026-06-13
+
+### Fixed
+- Trade-up eligibility (which listings get the `TU:` adjusted-float line) is now
+  determined per collection instead of by rarity alone. A skin counts only if its
+  collection actually contains the next grade up — so top-of-collection skins that
+  aren't Covert (e.g. R8 Revolver | Amber Fade, Desert Eagle | Blaze, Glock-18 |
+  Fade) are now correctly excluded, along with Covert/Contraband, knives and gloves
+  (the latter also no longer pollute the collection grade ladder).
+
 ## v0.2 — 2026-06-13
 
 ### Added
