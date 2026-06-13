@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.2.2 — 2026-06-13
+
+### Fixed
+- Trade-up eligibility now recognises case/terminal collections. A collection
+  that contains a "gold" (knife/glove) lets every grade up to and including
+  **Covert** trade up, so Coverts from cases (e.g. AK-47 | Fire Serpent,
+  M4A1-S | Chantico's Fire, AWP | Asiimov) show the `TU:` line again — v0.2.1
+  wrongly hid them. Collections without a gold (map / operation / armory sets,
+  e.g. Dust, and single-skin novelty sets like Blacksite / X-Ray) keep the
+  stricter rule: a skin is eligible only if its set actually holds the next
+  grade up, so top-of-collection skins remain excluded.
+
+### Changed
+- The **Tradeup Input Adjusted** checkbox now enables only when the search is
+  filtered to one skin that is itself an eligible trade-up input (using the same
+  eligibility rule as the `TU:` display). Selecting an ineligible skin — a Covert
+  with no gold (e.g. AWP | Dragon Lore), a knife/glove, or a top-of-collection
+  skin — keeps it greyed out, with an updated hover hint explaining why.
+
 ## v0.2.1 — 2026-06-13
 
 ### Fixed

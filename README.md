@@ -6,11 +6,14 @@ A Chrome extension that adds trade-up convenience features to csfloat.com.
 1. **Search pages** — under each **tradeup-eligible** listing's float
    value, shows the trade-up *adjusted float* (`TU: 0.xxxx`), computed as
    `(actual_float − low_cap) / (high_cap − low_cap)`. "Eligible" means the
-   skin can actually be a trade-up input — its collection must contain the
-   next grade up — so Covert, top-of-collection skins (e.g. a Classified
-   that's the highest grade in its set), knives and gloves are skipped.
-   Works for all search queries and keeps working as you scroll (paging)
-   or hit "reload listings".
+   skin can actually be a trade-up input. Case/terminal collections (those
+   with a knife/glove "gold" slot) let every grade up to and including
+   Covert trade up, so those Coverts are included. Collections without a
+   gold (map / operation / armory sets, and single-skin novelty sets) only
+   count if the set actually holds the next grade up, so their
+   top-of-collection skins are skipped — as are knives and gloves
+   themselves. Works for all search queries and keeps working as you scroll
+   (paging) or hit "reload listings".
    <img width="2125" height="1134" alt="image" src="https://github.com/user-attachments/assets/b83a67e4-6cb3-4e3d-91d0-c7a6997c6c71" />
 
 2. **Adjusted-float search** — a **Tradeup Input Adjusted** checkbox in

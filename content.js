@@ -1,6 +1,6 @@
 (() => {
     'use strict';
-    const SCHEMA_KEY = 'cftuh_schema_v4';
+    const SCHEMA_KEY = 'cftuh_schema_v5';
     const SCHEMA_TTL = 24 * 60 * 60 * 1000;
 
     let NAME_MAP = null, CAP_INDEX = null;
@@ -15,23 +15,33 @@
         if (!NAME_MAP) {
             const s = await (await fetch('/api/v1/schema')).json();
             // Knives/gloves are never trade-up inputs and carry off-ladder rarities, so
-            // they're excluded both as candidates and from the per-collection grade ladder.
+            // they're excluded as candidates and from the per-collection weapon-grade ladder
+            // — but the collections they appear in mark a case/terminal set (one with a
+            // "gold" rare-item slot), which is exactly what makes a Covert tradeable.
             const isKG = name => /knife|bayonet|karambit|daggers|glove|wraps/i.test(name);
-            // pass 1: the set of weapon grades (rarities) present in each collection
-            const colRarities = Object.create(null);
+            // pass 1: per collection, the weapon grades present, and whether it has a gold.
+            const colRarities = Object.create(null); // collection -> Set of weapon rarities
+            const goldCols = new Set();               // collections that contain a knife/glove
             for (const def in s.weapons) {
-                const w = s.weapons[def]; if (!w.paints || isKG(w.name)) continue;
+                const w = s.weapons[def]; if (!w.paints) continue;
+                const kg = isKG(w.name);
                 for (const p in w.paints)
-                    for (const c of (w.paints[p].collections || []))
-                        (colRarities[c] || (colRarities[c] = new Set())).add(w.paints[p].rarity);
+                    for (const c of (w.paints[p].collections || [])) {
+                        if (kg) goldCols.add(c);
+                        else (colRarities[c] || (colRarities[c] = new Set())).add(w.paints[p].rarity);
+                    }
             }
-            // CSFloat's schema has no "eligible" flag. A skin is a valid trade-up input only
-            // if its collection holds the next grade up (the contract output) — so it's not
-            // just Covert/Contraband that are excluded, but any top-of-collection skin
-            // (e.g. a Classified/Restricted that's the highest grade in its set).
+            // CSFloat's schema has no "eligible" flag, so we derive it. Two collection kinds:
+            //  • Case/terminal sets (a "gold" knife/glove slot sits above Covert): every grade
+            //    Mil-Spec..Covert can trade up — Covert → gold — so all are eligible.
+            //  • Map / operation / armory / novelty sets (no gold): a skin is only tradeable if
+            //    its collection actually holds the next grade up, so top-of-collection skins
+            //    (incl. a Classified/Restricted that caps its set) and single-skin novelty
+            //    sets are excluded.
             const tradeable = (rarity, collections) =>
-                rarity >= 1 && rarity <= 5 &&
-                (collections || []).some(c => colRarities[c] && colRarities[c].has(rarity + 1));
+                (collections || []).some(c => goldCols.has(c)
+                    ? (rarity >= 3 && rarity <= 6)
+                    : (colRarities[c] && colRarities[c].has(rarity + 1)));
             // pass 2: name -> [def, paint, min, max, eligible]
             NAME_MAP = {};
             for (const def in s.weapons) {
@@ -46,9 +56,11 @@
                 localStorage.setItem(SCHEMA_KEY + '_ts', String(Date.now())); } catch (_) {}
         }
         CAP_INDEX = Object.create(null);
-        for (const n in NAME_MAP) { const [d, p, mn, mx] = NAME_MAP[n]; CAP_INDEX[d + ':' + p] = [mn, mx]; }
+        for (const n in NAME_MAP) { const [d, p, mn, mx, elig] = NAME_MAP[n]; CAP_INDEX[d + ':' + p] = [mn, mx, elig]; }
     }
     const caps = (d, p) => CAP_INDEX ? CAP_INDEX[d + ':' + p] || null : null;
+    // is this specific skin a valid trade-up input? (eligibility flag baked into the map)
+    const isEligible = (d, p) => { const c = caps(d, p); return !!(c && c[2]); };
 
     // ---------- math ----------
     const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
@@ -59,10 +71,14 @@
     const isAdj = () => localStorage.getItem('cftuh_adjusted_on') === '1';
     const setAdj = v => localStorage.setItem('cftuh_adjusted_on', v ? '1' : '0');
 
+    // The adjusted overlay only makes sense when the search targets one specific skin that
+    // is itself a valid trade-up input. An ineligible skin (top-of-collection, a Covert with
+    // no gold above it, a knife/glove) has nothing to trade up to, so we treat it like a
+    // multi-skin search and keep the checkbox greyed out.
     function singleSkin() {
         const u = new URL(location.href);
         const d = u.searchParams.get('def_index'), p = u.searchParams.get('paint_index');
-        return (d && p && caps(d, p)) ? { d, p, c: caps(d, p) } : null;
+        return (d && p && caps(d, p) && isEligible(d, p)) ? { d, p, c: caps(d, p) } : null;
     }
 
     // CSFloat's real controls
@@ -178,13 +194,14 @@
         });
     }
 
-    // Keep the checkbox's enabled state in sync with the current search: adjusted mode
-    // only works for a single specific skin (def_index + paint_index), so grey it out
-    // otherwise and explain why on hover. If the user navigates away from a single-skin
-    // search while it's on, turn it back off so the overlay doesn't linger.
-    const MULTI_SKIN_HINT =
-        'Adjusted floats only work when the search is filtered to one specific skin ' +
-        '(a single weapon + paint). Pick a skin to enable this.';
+    // Keep the checkbox's enabled state in sync with the current search: adjusted mode only
+    // works for a single eligible trade-up input skin, so grey it out otherwise and explain
+    // why on hover. If the user navigates away from such a search while it's on, turn it back
+    // off so the overlay doesn't linger.
+    const INELIGIBLE_HINT =
+        'Adjusted floats only work when the search is filtered to one eligible trade-up ' +
+        'input skin (a specific skin that trades up to a higher rarity within its ' +
+        'collection). Pick an eligible skin to enable this.';
     function refreshToggle() {
         const cb = document.querySelector('#cftuh-adjusted');
         if (!cb) return;
@@ -193,7 +210,7 @@
         cb.disabled = !skin;
         if (lbl) {
             lbl.classList.toggle('cftuh-disabled', !skin);
-            lbl.title = skin ? '' : MULTI_SKIN_HINT;
+            lbl.title = skin ? '' : INELIGIBLE_HINT;
         }
         if (!skin && isAdj()) {
             setAdj(false);
